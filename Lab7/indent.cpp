@@ -20,18 +20,24 @@ int countChar(string, char);
 string getTabs(int&);
 
 int main(){
-    string input, modified;
+    string input;
     int count = 0;
     
-    while (getline(cin, input)){
-        modified = removeLeadingSpaces(input);
-        if (countChar(modified, '}') > 0){
-            count -= countChar(modified, '}');
-            //count--;
+    while(getline(cin, input)) {
+        if (removeLeadingSpaces(input)[0] == '}') {
+            for (int i = 0; i < count - 1; i++) {
+	            cout << '\t';
+            }
+        } else {
+            for (int i = 0; i < count; i++) {
+	            cout << '\t';
+            }
         }
-        cout << getTabs(count) << modified << "\n";
-        count += countChar(modified, '{');
-        
+
+        cout << removeLeadingSpaces(input) << "\n";
+    
+        count += countChar(input, '{');
+        count -= countChar(input, '}');
     }
 }
 
