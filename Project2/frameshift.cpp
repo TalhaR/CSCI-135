@@ -26,30 +26,19 @@ string translation(ifstream&, const string&); // uses the readcodons method to m
 int hamming(const string&, const string&);
 
 int main(){
-    readFile("mutations.txt");
+    readFile("frameshift_mutations.txt");
 }
 
 void readFile(const string& filePath){
     ifstream infile(filePath);
     ifstream codonsFile("codons.tsv");
-    string s1, s2;
+    string strand;
 
     if(infile.good()){
-        while (getline(infile, s1)){
-            getline(infile, s2);
-
-            cout << hamming(s1, s2);
-            
-            transcription(s1);
-            transcription(s2);
-            s1 = translation(codonsFile, s1);
-            s2 = translation(codonsFile, s2);
-
-            if (s1.compare(s2) == 0){
-                cout << " no\n";
-            } else {
-                cout << " yes\n";
-            }
+        while (getline(infile, strand)){
+            capitalize(strand);
+            transcription(strand);
+            cout << translation(codonsFile, strand) << "\n";
         }
     } else {
         cerr << "The file " << filePath << " cannot be read\n";
