@@ -29,16 +29,6 @@ int main(){
     readFile("mutations.txt");
 }
 
-int hamming(const string& a, const string& b){
-    int count = 0;
-    for (int i = 0; i < a.size(); i++){
-        if (a[i] != b[i]){
-            count++;
-        }
-    }
-    return count;
-}
-
 void readFile(const string& filePath){
     ifstream infile(filePath);
     ifstream codonsFile("codons.tsv");
@@ -65,6 +55,15 @@ void readFile(const string& filePath){
         cerr << "The file " << filePath << " cannot be read\n";
         exit(1);
     }
+}
+int hamming(const string& a, const string& b){
+    int count = 0;
+    for (int i = 0; i < a.size(); i++){
+        if (a[i] != b[i]){
+            count++;
+        }
+    }
+    return count;
 }
 
 string translation(ifstream& infile, const string& strand){
