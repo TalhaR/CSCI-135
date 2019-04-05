@@ -5,11 +5,8 @@ Instructor: Genady Maryash
 Assignment: Project 2
 */
 
-// This program reads a file called "mutations.txt"
-// then checks if the pair of strings (string one from odd line)
-// (string two from even line) then compares them
-// and will return the hamming distance and if it changed
-// the dna strand
+// This program reads a file called "frameshift_mutations.txt"
+// and then prints out the translation->translation of that stuff
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -20,13 +17,23 @@ using namespace std;
 void capitalize(string&); // capitalizes all inputs
 void replace(string&, char, char); // replaces characters in a string 
 void readFile(const string&);
-const string transcription(string&); // uses replace method to convert from DNA to RNA
+void transcription(string&); // uses replace method to convert from DNA to RNA
 string readCodons(ifstream&, string&); // reads the codons.tsv file and returns a codon
-string translation(ifstream&, const string&); // uses the readcodons method to make a string
+string translation(ifstream&, string&); // uses the readcodons method to make a string
 int hamming(const string&, const string&);
+void filter(string&);
 
 int main(){
     readFile("frameshift_mutations.txt");
+    //readFile("test2.txt");
+}
+
+void filter(string& s){
+    if(s.find("AUG") == string::npos){
+        s = "";
+    } else {
+        s = s.substr(s.find("AUG"));
+    }
 }
 
 void readFile(const string& filePath){
@@ -38,7 +45,14 @@ void readFile(const string& filePath){
         while (getline(infile, strand)){
             capitalize(strand);
             transcription(strand);
-            cout << translation(codonsFile, strand) << "\n";
+            filter(strand);
+            if (!strand.empty()){
+                strand = translation(codonsFile, strand);
+            }
+            if (strand.back() == '-'){
+                strand.pop_back();
+            }
+            cout << strand << "\n";
         }
     } else {
         cerr << "The file " << filePath << " cannot be read\n";
@@ -55,7 +69,7 @@ int hamming(const string& a, const string& b){
     return count;
 }
 
-string translation(ifstream& infile, const string& strand){
+string translation(ifstream& infile, string& strand){
     string mrna, codon;
     infile.clear();
     infile.seekg(0);
@@ -76,7 +90,7 @@ string translation(ifstream& infile, const string& strand){
         for (auto& x : aminos){
             string c = readCodons(infile, x);
             if (c == "Stop"){
-                result.pop_back(); // removes '-' at the end
+                result.pop_back();
                 return result;
             } 
             result += c;
@@ -104,13 +118,12 @@ string readCodons(ifstream& infile, string& amino){
     }
 }
 
-const string transcription(string& strand){
+void transcription(string& strand){
     replace(strand, 'A', 'U');
     replace(strand, 'T', 'A');
     replace(strand, 'C', 'X'); // need to move this to temp value 
     replace(strand, 'G', 'C');
     replace(strand, 'X', 'G');
-    return strand;
 }
 
 void replace(string& str, char a, char b){
