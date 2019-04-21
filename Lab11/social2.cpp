@@ -1,3 +1,12 @@
+/*
+	Author: Talha Rahman
+	Course: CSCI-136
+	Instructor: Minh Nguyen
+	Assignment: Lab 11
+*/
+// This program acts like a network and you can add 
+// users to the network
+
 #include <iostream>
 #include <string>
 #include "profile.h"
