@@ -1,4 +1,13 @@
+/*
+	Author: Talha Rahman
+	Course: CSCI-136
+	Instructor: Minh Nguyen
+	Assignment: Lab 8F
+*/
 
+// this program inverts the colors of a picture
+// such that the pixel with value 0 becomes 255
+// and so on
 #include <iostream>
 #include <cassert>
 #include <cstdlib>
@@ -74,7 +83,7 @@ void writeImage(int image[MAX_H][MAX_W], int height, int width) {
 
 int main() {
 	int img[MAX_H][MAX_W];
-	int h, w;
+	int h, w, avg = 0;
 
 	readImage(img, h, w); // read it from the file "inImage.pgm"
 	// h and w were passed by reference and
@@ -85,11 +94,15 @@ int main() {
 	// for example we copy its contents into a new array
 	int out[MAX_H][MAX_W];
 
-	for(int row = 0; row < h; row++) {
-		for(int col = 0; col < w; col++) {
-			out[row][col] = img[row][col];
-		}
-	}
+	for (int row = 0; row < h; row += 2) {
+    	for (int col = 0; col < w; col += 2) {
+      		avg = (img[row][col] + img[row+1][col] + img[row][col+1] + img[row+1][col+1]) / 4;
+      		out[row][col] = avg;
+      		out[row][col + 1] = avg;
+      		out[row + 1][col] = avg;
+      		out[row + 1][col + 1] = avg;
+    	}
+  	}
 
 	// and save this new image to file "outImage.pgm"
 	writeImage(out, h, w);

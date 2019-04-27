@@ -1,4 +1,13 @@
+/*
+	Author: Talha Rahman
+	Course: CSCI-136
+	Instructor: Minh Nguyen
+	Assignment: Lab 8D
+*/
 
+// this program inverts the colors of a picture
+// such that the pixel with value 0 becomes 255
+// and so on
 #include <iostream>
 #include <cassert>
 #include <cstdlib>
@@ -85,9 +94,19 @@ int main() {
 	// for example we copy its contents into a new array
 	int out[MAX_H][MAX_W];
 
+	int upperL = w / 4;
+  	int upperR = 3 * w / 4;
+  	int bottomL = h / 4;
+  	int bottomR = 3 * h / 4;
+
 	for(int row = 0; row < h; row++) {
 		for(int col = 0; col < w; col++) {
-			out[row][col] = img[row][col];
+			if (((row == bottomL || row == bottomR) && (col >= upperL && col <= upperR)) ||
+	  			((row >= bottomL && row <= bottomR) && (col == upperL || col == upperR))) {
+				out[row][col] = 255;
+      		} else {
+				out[row][col] = img[row][col];
+      		}
 		}
 	}
 
