@@ -74,8 +74,10 @@ void onAction(Dwarf &dwarf, int day, int hours, int minutes, ostream &log) {
 
   if (STUCK){
   // Otherwise, move to a random location 
-    int rr = rand() % (ROWS/2);
-    int cc = rand() % (COLS/2);
+    int a = ceil(ROWS/1.5);
+    int b = ceil(COLS/1.5);
+    int rr = (rand() % a) + 5;
+    int cc = (rand() % b) + 5;
 
     log << "Walk to " << rr << " " << cc << "\n";
     dwarf.start_walk(rr, cc);
@@ -108,8 +110,10 @@ void checkForSpace(Dwarf& dwarf, int &r, int &c){
     r++;
     return;
   }
-  r = rand() % (ROWS/2); 
-  c = rand() % (COLS/2);
+  int a = ceil(ROWS/1.5);
+  int b = ceil(COLS/1.5);
+  r = (rand() % a) + 5; 
+  c = (rand() % b) + 5;
 }
 
 void lookForNextTree(Dwarf &dwarf, int &r, int &c, int count){
@@ -182,6 +186,8 @@ bool isNextToATree(Dwarf &dwarf, int &r, int &c, Dir &d){
 }
 
 void checkIfInbounds(int &r, int &c){
-  if ((r < 0) || (r > ROWS)) r = rand() % (ROWS/2); 
-  if ((c < 0) || (c > COLS)) c = rand() % (COLS/2);
+  int a = ceil(ROWS/1.5);
+  int b = ceil(COLS/1.5);
+  if ((r < 0) || (r > ROWS)) r = (rand() % a) + 5; 
+  if ((c < 0) || (c > COLS)) c = (rand() % b) + 5;
 }
