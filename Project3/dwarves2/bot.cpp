@@ -34,15 +34,13 @@ int ROWS;  // global variables
 int COLS;
 int NUM;
 bool STUCK = false;
-bool BUILDING = false;
 Location BASE; 
 
 bool isNextToATree(Dwarf&, int&, int&, Dir&);
-void lookForNextTree(Dwarf&, int&, int&, int);
+bool lookForNextTree(Dwarf&, int&, int&, int);
 void checkForSpace(Dwarf&, int&, int&);
 bool isPossible(int&, int&);
-
-
+void goToRandomPosition(Dwarf&, std::ostream&);
 
 /* onStart: 
 An Initialization procedure called at the start of the game.
@@ -61,7 +59,6 @@ void onStart(int rows, int cols, int num, std::ostream &log) {
   COLS = cols;
   NUM = num;
 }
-
 /* onAction: 
 A procedure called each time an idle dwarf is choosing 
 their next action.
@@ -81,52 +78,39 @@ void onAction(Dwarf &dwarf, int day, int hours, int minutes, ostream &log) {
   // Check if there is a tree adjacent to dwarf
   if (isNextToATree(dwarf, r, c, d)) {
     // If there is a pine tree, chop it
-    log << "Found a tree -- chop\n";
+    log << "chopping at " << r << " " << c << " \n";
     dwarf.start_chop(d);
     STUCK = false;
     return;
   }
 
-  if (dwarf.lumber() == 0) BUILDING = false;
-
   ///cygdrive/c/Users/talha/documents/Git/csci-135/project3/dwarves2
-
-  if (BUILDING && dwarf.look(BASE.r, BASE.c) == FENCE){
-    log << "Building a fence\n";
-    dwarf.start_build(WEST);
-    BASE.incrementC();
-  } else {
-    log << "Walk to " << BASE.r << " " << BASE.c << "\n";
-    dwarf.start_walk(BASE.r, BASE.c);
-    return;
-  }
-
-  if (dwarf.lumber() > 50 && dwarf.look(BASE.r, BASE.c) == EMPTY){
-    log << "Walk to " << BASE.r << " " << BASE.c << "\n";
-    dwarf.start_walk(BASE.r, BASE.c);
-    
-    return;
-  }
 
 
   if (STUCK){
-  // Otherwise, move to a random location 
-    int rr = rand() % ROWS;
-    int cc = rand() % COLS;
-
-    log << "Walk to " << rr << " " << cc << "\n";
-    dwarf.start_walk(rr, cc);
-    return;
+    goToRandomPosition(dwarf, log); 
   } else {
-    lookForNextTree(dwarf, r, c, 1);
 
-    if(isPossible(r, c)){
+    if(lookForNextTree(dwarf, r, c, 1)){
       log << "Walk to " << r << " " << c << "\n";
       dwarf.start_walk(r, c);
-      STUCK = true;
+      STUCK = false;
+    } else {
+      goToRandomPosition(dwarf, log);
     }
     return;
   }
+}
+
+void goToRandomPosition(Dwarf& dwarf, std::ostream &log){
+  // Otherwise, move to a random location 
+  int rr = rand() % ROWS;
+  int cc = rand() % COLS;
+
+  log << "Walk to " << rr << " " << cc << "\n";
+  dwarf.start_walk(rr, cc);
+  STUCK = false;
+  return;
 }
 // will find an empty space near a tile
 void checkForSpace(Dwarf& dwarf, int &r, int &c){
@@ -150,43 +134,47 @@ void checkForSpace(Dwarf& dwarf, int &r, int &c){
   c = rand() % COLS;
 }
 
-void lookForNextTree(Dwarf &dwarf, int &r, int &c, int count){
+bool lookForNextTree(Dwarf &dwarf, int &r, int &c, int count){
   if (dwarf.look(r, c+count) == PINE_TREE || dwarf.look(r, c+count) == APPLE_TREE) {
     c += --count;
-    return;
+    return true;
   }
   if (dwarf.look(r, c-count) == PINE_TREE || dwarf.look(r, c-count) == APPLE_TREE) {
     c -= --count;
-    return;
+    return true;
   }
   if (dwarf.look(r-count, c) == PINE_TREE || dwarf.look(r-count, c) == APPLE_TREE){
     r -= --count;
-    return;
+    return true;
   }
   if (dwarf.look(r+count, c) == PINE_TREE || dwarf.look(r+count, c) == APPLE_TREE) {
     r += --count;
-    return;
+    return true;
   }
   // diagonals
   if (dwarf.look(r+count, c+count) == PINE_TREE || dwarf.look(r+count, c+count) == APPLE_TREE) {
     r += count; c += count;
     checkForSpace(dwarf, r, c);
-    return;
+    return true;
   }
   if (dwarf.look(r-count, c-count) == PINE_TREE || dwarf.look(r-count, c-count) == APPLE_TREE) {
     r -= count; c -= count;
     checkForSpace(dwarf, r, c);
-    return;
+    return true;
   }
   if (dwarf.look(r+count, c-count) == PINE_TREE || dwarf.look(r+count, c-count) == APPLE_TREE) {
     r += count; c -= count;
     checkForSpace(dwarf, r, c);
-    return;
+    return true;
   }
   if (dwarf.look(r-count, c+count) == PINE_TREE || dwarf.look(r-count, c+count) == APPLE_TREE) {
     r -= count; c += count;
     checkForSpace(dwarf, r, c);
-    return;
+    return true;
+  }
+  if (count > ROWS) {
+    STUCK = true; 
+    return false;
   }
   // recursively calls to check for tiles that are farther out
   lookForNextTree(dwarf, r, c, ++count);
@@ -224,4 +212,3 @@ bool isPossible(int &r, int &c){
   if ((c < 0) || (c > COLS)) return false;
   return true;
 }
-
