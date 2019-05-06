@@ -15,26 +15,6 @@ Assignment: Project 3
 #include "bot.h"
 using namespace std;
 
-struct Location {
-  int r = 5;
-  int c = 6;
-
-  // void incrementC(){
-  //   c++;
-  // }
-  void incrementR(){
-    r++;
-  }
-  // void increment(){
-  //   if (c > 10){
-  //     c = 6;
-  //     r++;
-  //   } else {
-  //     c++;
-  //   }
-  // }
-};
-
 const int MAX_ROWS = 40;
 const int MAX_COLS = 40;
 const int MAX_NUM = 10;
@@ -43,14 +23,17 @@ int ROWS;  // global variables
 int COLS;
 int NUM;
 bool stuck = false;
-bool building = false;
-static Location base; 
+bool firstTime = true;
+static bool building = false;
 
-bool isNextToATree(Dwarf&, int&, int&, Dir&);
-bool isNextToAFence(Dwarf&, int&, int&, Dir&);
+bool isNextToTree(Dwarf&, int&, int&, Dir&);
+bool isNextToFence(Dwarf&, int&, int&, Dir&);
+bool lookForNextFence(Dwarf&, int&, int&, int, Dir&);
 bool lookForNextTree(Dwarf&, int&, int&, int);
+bool outofBounds(Dwarf&, int&, int&);
 Dir checkForSpace(Dwarf&, int&, int&, int);
 void goToRandomPosition(Dwarf&, ostream&);
+//cygdrive/c/Users/talha/documents/Git/csci-135/project3/dwarves2
 
 /* onStart: 
 An Initialization procedure called at the start of the game.
@@ -86,67 +69,90 @@ void onAction(Dwarf &dwarf, int day, int hours, int minutes, ostream &log) {
   Dir d;
 
   // Check if there is a tree adjacent to dwarf
-  if (isNextToATree(dwarf, r, c, d)) {
+  if (isNextToTree(dwarf, r, c, d)) {
     // If there is a pine tree, chop it
-    log << "chopping at " << r << " " << c << " \n";
+    log << "Dwarf " << dwarf.name() << " - Chopping at " << r << " " << c << " \n";
     dwarf.start_chop(d);
     stuck = false;
     return;
   }
 
-  if(dwarf.lumber() >= 300){
+  if(isNextToFence(dwarf, r, c, d)){
+    if(outofBounds(dwarf, r, c)) {
+      goToRandomPosition(dwarf, log);
+      return;
+    }
+    log << "Dwarf " << dwarf.name() << " - Building fence at " << r << " " << c << "\n";
+    dwarf.start_build(d);
+    stuck = false;
+    return;
+  }
+  
+  // Moves dwarf to next empty tile if repeating actions
+  if (stuck){
+    goToRandomPosition(dwarf, log);
+    return;
+  } 
 
+  if (building){
+    if (lookForNextFence(dwarf, r, c, 1, d)) {
+
+      log << "Dwarf " << dwarf.name() << " - Fence found. Walking to " << r << " " << c << "\n";
+      dwarf.start_walk(r, c);
+      return;
+    } else {
+      checkForSpace(dwarf, r, c, 1);
+      log << "Dwarf " << dwarf.name() << " - Can't find fence. Walking to " << r << " " << c << "\n";
+      dwarf.start_walk(r, c);
+      return;
+    }
   }
 
-  ///cygdrive/c/Users/talha/documents/Git/csci-135/project3/dwarves2
+  if(dwarf.lumber() >= 300 && firstTime){
+    dwarf.start_build(checkForSpace(dwarf, r, c, 1));
+    log << "Dwarf " << dwarf.name() << " - Building fence at " << r << " " << c << "\n";
+    firstTime = false;
+    building = true;
+    return;
+  }
 
-  if (stuck){
-    goToRandomPosition(dwarf, log); 
-  } else if(lookForNextTree(dwarf, r, c, 1)){
-    log << "Walk to " << r << " " << c << "\n";
+  if(lookForNextTree(dwarf, r, c, 1) && !building){ // go next to tree
+    log << "Dwarf " << dwarf.name() << " - Tree found. Walking to " << r << " " << c << "\n";
     dwarf.start_walk(r, c);
     stuck = false;
-  } else {
-    goToRandomPosition(dwarf, log);
-    stuck = true;
+  } else if (!building){ // go to next empty tile
+    checkForSpace(dwarf, r, c, 1);
+    log << "Dwarf " << dwarf.name() << " - Looking for tree. Walking to " << r << " " << c << "\n";
+    dwarf.start_walk(r, c);
+    stuck = false;
   }
 }
 
-
-void goToRandomPosition(Dwarf& dwarf, ostream &log){
-  // Otherwise, move to a random location 
-  int rr = rand() % ROWS;
-  int cc = rand() % COLS;
-
-  log << "Walk to " << rr << " " << cc << "\n";
-  dwarf.start_walk(rr, cc);
-  stuck = false;
-  return;
+bool outofBounds(Dwarf& dwarf, int& r, int& c){
+  if (r < 0 || r > ROWS) return true;
+  if (c < 0 || c > COLS) return true;
+  return false;
 }
 // will find an empty space near a tile
 Dir checkForSpace(Dwarf& dwarf, int &r, int &c, int count){
-  if (dwarf.look(r, c+count) == EMPTY) { // EAST
-    c++;
-    return EAST;
-  }
-  if (dwarf.look(r, c-count) == EMPTY) { // WEST
-    c--;
-    return WEST;
-  }
   if (dwarf.look(r-count, c) == EMPTY ){ // NORTH
     r--;
     return NORTH;
+  }
+  if (dwarf.look(r, c+count) == EMPTY) { // EAST
+    c++;
+    return EAST;
   }
   if (dwarf.look(r+count, c) == EMPTY) { // SOUTH
     r++;
     return SOUTH;
   }
+  if (dwarf.look(r, c-count) == EMPTY) { // WEST
+    c--;
+    return WEST;
+  }
   r = rand() % ROWS; 
   c = rand() % COLS;
-}
-
-void lookForFence(Dwarf& dwarf, int& r, int& c, int count){
-
 }
 
 bool lookForNextTree(Dwarf &dwarf, int &r, int &c, int count){
@@ -195,14 +201,58 @@ bool lookForNextTree(Dwarf &dwarf, int &r, int &c, int count){
   lookForNextTree(dwarf, r, c, ++count);
 }
 
+bool lookForNextFence(Dwarf &dwarf, int &r, int &c, int count, Dir& d){
+  if (dwarf.look(r, c+count) == FENCE) {
+    c += count-2;
+    d = EAST;
+    return true;
+  }
+  if (dwarf.look(r, c-count) == FENCE) {
+    c -= count-2;
+    d = WEST;
+    return true;
+  }
+  if (dwarf.look(r-count, c) == FENCE){
+    r -= count-2;
+    d = NORTH;
+    return true;
+  }
+  if (dwarf.look(r+count, c) == FENCE) {
+    r += count-2;
+    d = SOUTH;
+    return true;
+  }
+  // diagonals
+  if (dwarf.look(r+count, c+count) == FENCE) {
+    r += count; c += count;
+    d = checkForSpace(dwarf, r, c, 2);
+    return true;
+  }
+  if (dwarf.look(r-count, c-count) == FENCE) {
+    r -= count; c -= count;
+    d = checkForSpace(dwarf, r, c, 2);
+    return true;
+  }
+  if (dwarf.look(r+count, c-count) == FENCE) {
+    r += count; c -= count;
+    d = checkForSpace(dwarf, r, c, 2);
+    return true;
+  }
+  if (dwarf.look(r-count, c+count) == FENCE) {
+    r -= count; c += count;
+    d = checkForSpace(dwarf, r, c, 2);
+    return true;
+  }
+  if (count == ROWS) {
+    stuck = true; 
+    return false;
+  }
+  // recursively calls to check for tiles that are farther out
+  lookForNextFence(dwarf, r, c, ++count, d);
+}
+
 // this function will check if the dwarf is next to a tree
-// it can be either pine or apple, doesn't matter
-// and then it will return not only a boolean value of true
-// but will modify the variable d to be the direction
-// that the tree was found in so I can use it later
-// when choping so I don't have to check what direction
-// the tree is in again
-bool isNextToATree(Dwarf &dwarf, int &r, int &c, Dir &d){
+bool isNextToTree(Dwarf &dwarf, int &r, int &c, Dir &d){
   if (dwarf.look(r, c+1) == PINE_TREE || dwarf.look(r, c+1) == APPLE_TREE) {
     d = EAST;
     return true;
@@ -221,22 +271,31 @@ bool isNextToATree(Dwarf &dwarf, int &r, int &c, Dir &d){
   }
   return false;
 }
-bool isNextToAFence(Dwarf &dwarf, int &r, int &c, Dir &d){
-  if (dwarf.look(r, c+1) == FENCE) {
+// checks if dwarf is 2 tiles from a fence
+bool isNextToFence(Dwarf &dwarf, int &r, int &c, Dir &d) {
+  if (dwarf.look(r, c+2) == FENCE && dwarf.look(r, c+1) == EMPTY) {
     d = EAST;
     return true;
   }
-  if (dwarf.look(r, c-1) == FENCE) {
+  if (dwarf.look(r, c-2) == FENCE && dwarf.look(r, c-1) == EMPTY) {
     d = WEST;
     return true;
   }
-  if (dwarf.look(r-1, c) == FENCE){
+  if (dwarf.look(r-2, c) == FENCE && dwarf.look(r-1, c) == EMPTY){
     d = NORTH;
     return true;
   }
-  if (dwarf.look(r+1, c) == FENCE) {
+  if (dwarf.look(r+2, c) == FENCE && dwarf.look(r+1, c) == EMPTY) {
     d = SOUTH;
     return true;
   }
   return false;
+}
+
+void goToRandomPosition(Dwarf& dwarf, ostream& log){
+  int rr = rand() % ROWS; 
+  int cc = rand() % COLS;
+  log << "Dwarf " << dwarf.name() << " - Randomly walking to " << rr << " " << cc << "\n";
+  dwarf.start_walk(rr, cc);
+  stuck = false;
 }
